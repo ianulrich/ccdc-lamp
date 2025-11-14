@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html><head><title>CCDC Monitor</title><meta http-equiv="refresh" content="10"></head>
+<body><h1>Service Status</h1>
+<?php
+$ip = trim(shell_exec("hostname -I | awk '{print $1}'"));
+$services = [
+  "HTTP" => "curl -s -o /dev/null -w '%{http_code}' http://$ip/score.php",
+  "SMTP" => "timeout 3 bash -c 'echo > /dev/tcp/$ip/25' && echo 0 || echo 1",
+  "POP3" => "timeout 3 bash -c 'echo > /dev/tcp/$ip/110' && echo 0 || echo 1"
+];
+foreach ($services as $name => $cmd) {
+  $result = trim(shell_exec($cmd));
+  $status = ($name == "HTTP") ? ($result == "200" ? "UP" : "DOWN") : ($result == "0" ? "UP" : "DOWN");
+  echo "<p><strong>$name:</strong> <span style='color:".($status=="UP"?"green":"red")."'>$status</span></p>";
+}
+?>
+</body></html>
